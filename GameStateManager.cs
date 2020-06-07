@@ -17,7 +17,7 @@ public class GameStateManager: NetworkBehaviour
 			{
 				case GameState.PAUSED :
 					Cursor.lockState = CursorLockMode.None;
-					Cursor.visible = false;
+					Cursor.visible = true;
 					state = value;
 					break;
 				case GameState.IN_GAME :
