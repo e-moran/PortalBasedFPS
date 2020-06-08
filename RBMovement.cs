@@ -41,22 +41,23 @@ public class RBMovement : NetworkBehaviour
 
 	    bodyRotation = new Vector3(0, Input.GetAxis("Camera X"), 0) * (mouseSensitivity * Time.deltaTime);
 	    cameraRot += Input.GetAxis("Camera Y") * mouseSensitivity * Time.deltaTime;
-	    cameraRot = Mathf.Clamp(cameraRot, -90, 90);
+	    cameraRot = Mathf.Clamp(cameraRot, -90, 90); // To prevent the camera from flipping
 
 	    moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
-	    moveDirection = transform.TransformDirection(moveDirection); // Deal with rotation
+	    moveDirection = transform.TransformDirection(moveDirection); // Make sure forward takes in to account the direction the player is facing
 	    moveDirection *= speed;
+
+	    // If the player is sprinting we apply a multiplier to the player's speed
+	    if (Input.GetButton("Sprint"))
+	    {
+		    moveDirection *= sprintMultiplier;
+	    }
 
 	    if (IsGrounded())
 	    {
-		    if (Input.GetButton("Sprint"))
-		    {
-			    moveDirection *= sprintMultiplier;
-		    }
-
 		    if (Input.GetButtonDown("Jump"))
 		    {
-			    rb.AddForce(Vector3.up * Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y), ForceMode.VelocityChange);
+			    rb.AddForce(Vector3.up * Mathf.Sqrt(jumpHeight * -1f * Physics.gravity.y), ForceMode.VelocityChange);
 		    }
 	    }
     }
@@ -70,6 +71,6 @@ public class RBMovement : NetworkBehaviour
 
     private bool IsGrounded()
     {
-	    return Physics.Raycast(transform.position, -Vector3.up, distToGround + 0.1f);
+	    return Physics.Raycast(transform.position, -Vector3.up, distToGround);
     }
 }
