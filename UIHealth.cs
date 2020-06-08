@@ -2,16 +2,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIHealth : NetworkBehaviour
+public class UIHealth : MonoBehaviour
 {
 	private AttackableEntity health;
 	private Text text;
-
-	[Client]
-	public override void OnStartLocalPlayer()
-	{
-		base.OnStartLocalPlayer();
-	}
 
 	void Start()
 	{

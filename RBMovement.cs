@@ -10,6 +10,7 @@ public class RBMovement : NetworkBehaviour
 	public float distToGround = 1.0f;
 
 	private Rigidbody rb;
+	private GameStateManager stateManager;
 	private Vector3 moveDirection = Vector3.zero;
 	private Vector3 bodyRotation = Vector3.zero;
 	private Transform cameraTransform;
@@ -18,6 +19,7 @@ public class RBMovement : NetworkBehaviour
 
 	void Start()
 	{
+		stateManager = GetComponent<GameStateManager>();
 		rb = gameObject.GetComponent<Rigidbody>();
 		cameraTransform = transform.GetChild(0);
 		if (isLocalPlayer)
@@ -64,9 +66,13 @@ public class RBMovement : NetworkBehaviour
 
     void FixedUpdate()
     {
-	    rb.MovePosition(rb.position + moveDirection * Time.fixedDeltaTime);
-	    transform.Rotate(bodyRotation);
-	    cameraTransform.localEulerAngles = new Vector3(cameraRot, 0, 0);
+	    // Ensure that the player is in-game before attempting to move them
+	    if (stateManager.State == GameStateManager.GameState.IN_GAME)
+	    {
+		    rb.MovePosition(rb.position + moveDirection * Time.fixedDeltaTime);
+		    transform.Rotate(bodyRotation);
+		    cameraTransform.localEulerAngles = new Vector3(cameraRot, 0, 0);
+	    }
     }
 
     private bool IsGrounded()

@@ -1,10 +1,22 @@
 ﻿using System;
+using System.Collections;
 using Mirror;
 using UnityEngine;
 
 public class AttackableEntity : NetworkBehaviour
 {
-	public float health = 100.0f; // Storing health as an int to allow for fractional health caused by percentage modifiers
+	private float health; // Storing health as a float to allow for fractional health caused by percentage modifiers
+	public float maxHealth = 100.0f;
+	public bool respawns = false;
+	public int respawnTimer = 1;
+
+	private GameStateManager gsm;
+
+	private void Start()
+	{
+		gsm = GetComponent<GameStateManager>();
+		health = maxHealth;
+	}
 
 	public int GetHealthInt()
     {
@@ -26,7 +38,35 @@ public class AttackableEntity : NetworkBehaviour
     {
 	    health -= damage;
 	    if (health <= 0)
-		    Destroy(gameObject);
+		    Death();
+    }
+
+    [Server]
+    public void Death()
+    {
+	    if (gameObject.CompareTag("Player") && respawns)
+	    {
+		    gsm.TargetRpcEnterDeadAwaitingRespawn(GetComponent<NetworkIdentity>().connectionToClient, respawnTimer, gameObject);
+		    StartCoroutine(WaitForRespawn());
+	    }
+	    else
+	    {
+		    Destroy(gameObject); // Simply destroy any killed GO that's not a player
+	    }
+    }
+
+    [Server]
+    IEnumerator WaitForRespawn()
+    {
+	    Debug.Log("Waiting for respawn");
+	    for (int i = respawnTimer; i >= 0; i--)
+	    {
+		    yield return new WaitForSeconds(1);
+	    }
+
+	    Debug.Log("Respawning");
+	    health = maxHealth;
+		gsm.TargetRpcRespawn(GetComponent<NetworkIdentity>().connectionToClient);
     }
 
 }

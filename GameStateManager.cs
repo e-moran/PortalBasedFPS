@@ -1,9 +1,14 @@
-﻿using Mirror;
+﻿using System.Collections;
+using Mirror;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameStateManager: NetworkBehaviour
 {
 	private GameState state;
+	private GameObject inGameHUD;
+	private GameObject respawnHUD;
+	private Rigidbody rb;
 
 	public GameState State
 	{
@@ -16,11 +21,13 @@ public class GameStateManager: NetworkBehaviour
 			switch (value)
 			{
 				case GameState.PAUSED :
+					// TODO Implement actual pause screen
 					Cursor.lockState = CursorLockMode.None;
 					Cursor.visible = true;
 					state = value;
 					break;
 				case GameState.IN_GAME :
+					// TODO Implement starting HUD
 					Cursor.lockState = CursorLockMode.Locked;
 					Cursor.visible = false;
 					state = value;
@@ -39,6 +46,18 @@ public class GameStateManager: NetworkBehaviour
 		State = GameState.DISCONNECTED;
 	}
 
+	void Start()
+	{
+		rb = GetComponent<Rigidbody>();
+		if (!inGameHUD)
+			inGameHUD = Instantiate(Resources.Load<GameObject>("Prefabs/InGameHUD"));
+		inGameHUD.GetComponentInChildren<UIHealth>().SetAttackableEntity(GetComponent<AttackableEntity>());
+		if (!respawnHUD)
+			respawnHUD = Instantiate(Resources.Load<GameObject>("Prefabs/AwaitingRespawnHUD"));
+		respawnHUD.SetActive(false);
+		Debug.Log(respawnHUD);
+	}
+
 	void Update()
 	{
 		if (Input.GetButtonDown("Escape") && state == GameState.IN_GAME)
@@ -48,6 +67,36 @@ public class GameStateManager: NetworkBehaviour
 		{
 			State = GameState.IN_GAME;
 		}
+	}
+
+	[TargetRpc]
+	public void TargetRpcEnterDeadAwaitingRespawn(NetworkConnection identity, int respawnTime, GameObject player)
+	{
+		state = GameState.DEAD_AWAITING_RESPAWN;
+		inGameHUD.SetActive(false);
+		respawnHUD.SetActive(true);
+		rb.position += Vector3.right * 1000;
+		StartCoroutine(RespawnTimer(respawnTime));
+	}
+
+	[Client]
+	IEnumerator RespawnTimer(int respawnTime)
+	{
+		Text respawnText = respawnHUD.transform.Find("Countdown").gameObject.GetComponent<Text>();
+		for (int i = respawnTime; i >= 0; i--)
+		{
+			respawnText.text = "Respawning in: " + i;
+			yield return new WaitForSeconds(1);
+		}
+	}
+
+	[TargetRpc]
+	public void TargetRpcRespawn(NetworkConnection identity)
+	{
+		rb.position = Vector3.zero;
+		respawnHUD.SetActive(false);
+		inGameHUD.SetActive(true);
+		state = GameState.IN_GAME;
 	}
 
 	public override void OnStartLocalPlayer()
@@ -60,6 +109,7 @@ public class GameStateManager: NetworkBehaviour
     {
 	    IN_GAME,
 	    PAUSED,
-	    DISCONNECTED
+	    DISCONNECTED,
+	    DEAD_AWAITING_RESPAWN
     }
 }

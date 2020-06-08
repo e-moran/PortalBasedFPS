@@ -29,9 +29,13 @@ public class Weapon : NetworkBehaviour
 		{
 			if (Input.GetButton("Shoot"))
 			{
-				yield return new WaitForSeconds(secondsPerShot);
 				CmdShoot();
-				Debug.Log("Shot");
+				yield return new WaitForSeconds(secondsPerShot);
+			}
+
+			if (Input.GetKeyDown("p")) // Debug key to kill player
+			{
+				GetComponent<AttackableEntity>().TakeDamage(150);
 			}
 
 			yield return null;
