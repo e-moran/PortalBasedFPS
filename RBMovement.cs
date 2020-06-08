@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using Mirror;
+﻿using Mirror;
 using UnityEngine;
 
 public class RBMovement : NetworkBehaviour
@@ -10,15 +7,14 @@ public class RBMovement : NetworkBehaviour
 	public float jumpHeight = 8.0f;
 	public float sprintMultiplier = 2.0f;
 	public float mouseSensitivity = 0.2f;
-	public float airMovementModifier = 0.25f;
 	public float distToGround = 1.0f;
 
 	private Rigidbody rb;
 	private Vector3 moveDirection = Vector3.zero;
 	private Vector3 bodyRotation = Vector3.zero;
-	private Vector3 cameraRotation = Vector3.zero;
 	private Transform cameraTransform;
 	private bool blinked = false;
+	private float cameraRot = 0f;
 
 	void Start()
 	{
@@ -37,12 +33,15 @@ public class RBMovement : NetworkBehaviour
 		    return;
 	    }
 
-	    bodyRotation = new Vector3(0, Input.GetAxis("Camera X"), 0) * mouseSensitivity;
-	    cameraRotation = new Vector3(Input.GetAxis("Camera Y"), 0, 0) * mouseSensitivity;
-	    if (Math.Abs(cameraRotation.y) > 90) // We need to make sure the camera doesn't go past 90 and turn upside down
+	    if (Input.GetButtonDown("Blink"))
 	    {
-		    cameraRotation.y = 90 * Math.Sign(bodyRotation.y);
+		    transform.position += new Vector3(blinked ? -100 : 100, 0, 0); // Switch between adding and subbing 100
+		    blinked = !blinked;
 	    }
+
+	    bodyRotation = new Vector3(0, Input.GetAxis("Camera X"), 0) * (mouseSensitivity * Time.deltaTime);
+	    cameraRot += Input.GetAxis("Camera Y") * mouseSensitivity * Time.deltaTime;
+	    cameraRot = Mathf.Clamp(cameraRot, -90, 90);
 
 	    moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
 	    moveDirection = transform.TransformDirection(moveDirection); // Deal with rotation
@@ -60,15 +59,13 @@ public class RBMovement : NetworkBehaviour
 			    rb.AddForce(Vector3.up * Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y), ForceMode.VelocityChange);
 		    }
 	    }
-
-	    Debug.Log(IsGrounded());
     }
 
     void FixedUpdate()
     {
 	    rb.MovePosition(rb.position + moveDirection * Time.fixedDeltaTime);
 	    transform.Rotate(bodyRotation);
-	    cameraTransform.Rotate(cameraRotation);
+	    cameraTransform.localEulerAngles = new Vector3(cameraRot, 0, 0);
     }
 
     private bool IsGrounded()
