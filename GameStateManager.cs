@@ -43,19 +43,8 @@ public class GameStateManager: NetworkBehaviour
 
 	void Awake()
 	{
-		State = GameState.DISCONNECTED;
-	}
 
-	void Start()
-	{
-		rb = GetComponent<Rigidbody>();
-		if (!inGameHUD)
-			inGameHUD = Instantiate(Resources.Load<GameObject>("Prefabs/InGameHUD"));
-		inGameHUD.GetComponentInChildren<UIHealth>().SetAttackableEntity(GetComponent<AttackableEntity>());
-		if (!respawnHUD)
-			respawnHUD = Instantiate(Resources.Load<GameObject>("Prefabs/AwaitingRespawnHUD"));
-		respawnHUD.SetActive(false);
-		Debug.Log(respawnHUD);
+		State = GameState.DISCONNECTED;
 	}
 
 	void Update()
@@ -101,8 +90,21 @@ public class GameStateManager: NetworkBehaviour
 
 	public override void OnStartLocalPlayer()
 	{
+		Debug.Log(new System.Diagnostics.StackTrace().ToString());
 		State = GameState.IN_GAME;
+		gameObject.name = "Local";
 		Debug.Log("Connected");
+
+		rb = GetComponent<Rigidbody>();
+		if (isLocalPlayer)
+		{
+			if (!inGameHUD)
+				inGameHUD = Instantiate(Resources.Load<GameObject>("Prefabs/InGameHUD"));
+			if (!respawnHUD)
+				respawnHUD = Instantiate(Resources.Load<GameObject>("Prefabs/AwaitingRespawnHUD"));
+			respawnHUD.SetActive(false);
+			Debug.Log(respawnHUD);
+		}
 	}
 
 	public enum GameState

@@ -1,10 +1,8 @@
-﻿using Mirror;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class UIHealth : MonoBehaviour
 {
-	private AttackableEntity health;
 	private Text text;
 
 	void Start()
@@ -12,14 +10,13 @@ public class UIHealth : MonoBehaviour
 		text = GetComponent<Text>();
 	}
 
-	public void SetAttackableEntity(AttackableEntity entity)
+	private void OnEnable()
 	{
-		Debug.Log("Set attackable entity");
-		health = entity;
+		GameObject.Find("Local").GetComponent<AttackableEntity>().OnHealthChanged += UpdateHealth;
 	}
 
-	void Update()
+	private void UpdateHealth(int health)
 	{
-		text.text = "Health: " + health.GetHealthInt();
+		text.text = "Health: " + health;
 	}
 }

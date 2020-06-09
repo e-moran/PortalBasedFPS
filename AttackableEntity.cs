@@ -10,6 +10,8 @@ public class AttackableEntity : NetworkBehaviour
 	public bool respawns = false;
 	public int respawnTimer = 1;
 
+	public event Action<int> OnHealthChanged;
+
 	private GameStateManager gsm;
 
 	private void Start()
@@ -27,16 +29,13 @@ public class AttackableEntity : NetworkBehaviour
 	{
 		base.OnStartLocalPlayer();
 		Debug.Log("Interesting event");
-		if (hasAuthority)
-		{
-			GameObject.Find("Health").GetComponent<UIHealth>().SetAttackableEntity(this);
-		}
 	}
 
 	[Server]
     public void TakeDamage(float damage)
     {
 	    health -= damage;
+	    OnHealthChanged?.Invoke(GetHealthInt());
 	    if (health <= 0)
 		    Death();
     }
@@ -66,6 +65,7 @@ public class AttackableEntity : NetworkBehaviour
 
 	    Debug.Log("Respawning");
 	    health = maxHealth;
+	    OnHealthChanged?.Invoke(GetHealthInt());
 		gsm.TargetRpcRespawn(GetComponent<NetworkIdentity>().connectionToClient);
     }
 
