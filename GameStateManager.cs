@@ -90,21 +90,30 @@ public class GameStateManager: NetworkBehaviour
 
 	public override void OnStartLocalPlayer()
 	{
+	}
+
+	public override void OnStartAuthority()
+	{
 		Debug.Log(new System.Diagnostics.StackTrace().ToString());
 		State = GameState.IN_GAME;
 		gameObject.name = "Local";
 		Debug.Log("Connected");
 
 		rb = GetComponent<Rigidbody>();
-		if (isLocalPlayer)
-		{
-			if (!inGameHUD)
-				inGameHUD = Instantiate(Resources.Load<GameObject>("Prefabs/InGameHUD"));
-			if (!respawnHUD)
-				respawnHUD = Instantiate(Resources.Load<GameObject>("Prefabs/AwaitingRespawnHUD"));
-			respawnHUD.SetActive(false);
-			Debug.Log(respawnHUD);
-		}
+
+		if (!inGameHUD)
+			inGameHUD = Instantiate(Resources.Load<GameObject>("Prefabs/InGameHUD"));
+		if (!respawnHUD)
+			respawnHUD = Instantiate(Resources.Load<GameObject>("Prefabs/AwaitingRespawnHUD"));
+		respawnHUD.SetActive(false);
+		Debug.Log(respawnHUD);
+	}
+
+	public override void OnStopAuthority()
+	{
+		Debug.Log("Destroying objects");
+		Destroy(inGameHUD);
+		Destroy(respawnHUD);
 	}
 
 	public enum GameState

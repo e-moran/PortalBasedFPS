@@ -5,10 +5,24 @@ using UnityEngine;
 
 public class AttackableEntity : NetworkBehaviour
 {
-	private float health; // Storing health as a float to allow for fractional health caused by percentage modifiers
 	public float maxHealth = 100.0f;
 	public bool respawns = false;
 	public int respawnTimer = 1;
+
+	private float Health
+	{
+		get
+		{
+			return health;
+		}
+		set
+		{
+			health = value;
+			OnHealthChanged?.Invoke(GetHealthInt());
+		}
+	} // Storing health as a float to allow for fractional health caused by percentage modifiers
+
+	private float health;
 
 	public event Action<int> OnHealthChanged;
 
@@ -17,7 +31,7 @@ public class AttackableEntity : NetworkBehaviour
 	private void Start()
 	{
 		gsm = GetComponent<GameStateManager>();
-		health = maxHealth;
+		Health = maxHealth;
 	}
 
 	public int GetHealthInt()
@@ -34,9 +48,8 @@ public class AttackableEntity : NetworkBehaviour
 	[Server]
     public void TakeDamage(float damage)
     {
-	    health -= damage;
-	    OnHealthChanged?.Invoke(GetHealthInt());
-	    if (health <= 0)
+	    Health -= damage;
+	    if (Health <= 0)
 		    Death();
     }
 
@@ -64,7 +77,7 @@ public class AttackableEntity : NetworkBehaviour
 	    }
 
 	    Debug.Log("Respawning");
-	    health = maxHealth;
+	    Health = maxHealth;
 	    OnHealthChanged?.Invoke(GetHealthInt());
 		gsm.TargetRpcRespawn(GetComponent<NetworkIdentity>().connectionToClient);
     }
