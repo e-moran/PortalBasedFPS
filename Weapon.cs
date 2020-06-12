@@ -35,7 +35,8 @@ public class Weapon : NetworkBehaviour
 
 			if (Input.GetKeyDown("p")) // Debug key to kill player
 			{
-				GetComponent<AttackableEntity>().TakeDamage(75);
+				Debug.Log("Sending debug take damage command");
+				GetComponent<AttackableEntity>().CmdTakeDamage(75);
 			}
 
 			yield return null;

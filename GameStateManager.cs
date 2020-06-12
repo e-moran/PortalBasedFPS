@@ -9,6 +9,7 @@ public class GameStateManager: NetworkBehaviour
 	private GameObject inGameHUD;
 	private GameObject respawnHUD;
 	private Rigidbody rb;
+	private LocalMessenger _messenger;
 
 	public GameState State
 	{
@@ -90,30 +91,28 @@ public class GameStateManager: NetworkBehaviour
 
 	public override void OnStartLocalPlayer()
 	{
-	}
-
-	public override void OnStartAuthority()
-	{
 		Debug.Log(new System.Diagnostics.StackTrace().ToString());
 		State = GameState.IN_GAME;
 		gameObject.name = "Local";
 		Debug.Log("Connected");
 
 		rb = GetComponent<Rigidbody>();
+		_messenger = GameObject.Find("LocalMessenger").GetComponent<LocalMessenger>();
 
-		if (!inGameHUD)
+		/*if (!inGameHUD)
 			inGameHUD = Instantiate(Resources.Load<GameObject>("Prefabs/InGameHUD"));
 		if (!respawnHUD)
-			respawnHUD = Instantiate(Resources.Load<GameObject>("Prefabs/AwaitingRespawnHUD"));
+			respawnHUD = Instantiate(Resources.Load<GameObject>("Prefabs/AwaitingRespawnHUD"));*/
+
+		inGameHUD = GameObject.Find("InGameHUD");
+		respawnHUD = GameObject.Find("AwaitingRespawnHUD");
 		respawnHUD.SetActive(false);
-		Debug.Log(respawnHUD);
+		_messenger.InvokePlayerConnected(gameObject);
 	}
 
-	public override void OnStopAuthority()
+	public override void OnStopClient()
 	{
-		Debug.Log("Destroying objects");
-		Destroy(inGameHUD);
-		Destroy(respawnHUD);
+		_messenger.InvokePlayerDisconnected(gameObject);
 	}
 
 	public enum GameState

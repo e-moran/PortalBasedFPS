@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using Mirror;
+using UnityEditor.Hardware;
 using UnityEngine;
 
 public class AttackableEntity : NetworkBehaviour
@@ -9,7 +10,7 @@ public class AttackableEntity : NetworkBehaviour
 	public bool respawns = false;
 	public int respawnTimer = 1;
 
-	private float Health
+	/*private float Health
 	{
 		get
 		{
@@ -19,9 +20,11 @@ public class AttackableEntity : NetworkBehaviour
 		{
 			health = value;
 			OnHealthChanged?.Invoke(GetHealthInt());
+			Debug.Log("Health changed");
 		}
-	} // Storing health as a float to allow for fractional health caused by percentage modifiers
+	} // Storing health as a float to allow for fractional health caused by percentage modifiers*/
 
+	[SyncVar(hook = nameof(OnHealthChange))]
 	private float health;
 
 	public event Action<int> OnHealthChanged;
@@ -31,7 +34,6 @@ public class AttackableEntity : NetworkBehaviour
 	private void Start()
 	{
 		gsm = GetComponent<GameStateManager>();
-		Health = maxHealth;
 	}
 
 	public int GetHealthInt()
@@ -39,17 +41,36 @@ public class AttackableEntity : NetworkBehaviour
 	    return (int) Math.Ceiling(health); // Using Ceil to avoid a situation where a player is still alive with "0" health
     }
 
-	public override void OnStartLocalPlayer()
+	public override void OnStartServer()
 	{
-		base.OnStartLocalPlayer();
-		Debug.Log("Interesting event");
+		// Set the player's starting health once the game object is created on the server
+		SetHealth(maxHealth);
+	}
+
+	[Client]
+	public void OnHealthChange(float oldHealth, float newHealth)
+	{
+		OnHealthChanged?.Invoke((int) Math.Ceiling(newHealth));
+	}
+
+	// Change the health by the amount specified, a negative amount decreases the players health
+	[Server]
+	public void SetHealth(float health)
+	{
+		this.health = health;
+	}
+
+	[Command]
+	public void CmdTakeDamage(float damage)
+	{
+		TakeDamage(damage);
 	}
 
 	[Server]
     public void TakeDamage(float damage)
     {
-	    Health -= damage;
-	    if (Health <= 0)
+	    SetHealth(health - damage);
+	    if (health <= 0)
 		    Death();
     }
 
@@ -77,7 +98,7 @@ public class AttackableEntity : NetworkBehaviour
 	    }
 
 	    Debug.Log("Respawning");
-	    Health = maxHealth;
+	    SetHealth(maxHealth);
 	    OnHealthChanged?.Invoke(GetHealthInt());
 		gsm.TargetRpcRespawn(GetComponent<NetworkIdentity>().connectionToClient);
     }
