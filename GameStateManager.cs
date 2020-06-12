@@ -8,6 +8,7 @@ public class GameStateManager: NetworkBehaviour
 	private GameState state;
 	private GameObject inGameHUD;
 	private GameObject respawnHUD;
+	private Text _respawnText;
 	private Rigidbody rb;
 	private LocalMessenger _messenger;
 
@@ -60,7 +61,7 @@ public class GameStateManager: NetworkBehaviour
 	}
 
 	[TargetRpc]
-	public void TargetRpcEnterDeadAwaitingRespawn(NetworkConnection identity, int respawnTime, GameObject player)
+	public void TargetRpcEnterDeadAwaitingRespawn(int respawnTime)
 	{
 		state = GameState.DEAD_AWAITING_RESPAWN;
 		inGameHUD.SetActive(false);
@@ -72,16 +73,15 @@ public class GameStateManager: NetworkBehaviour
 	[Client]
 	IEnumerator RespawnTimer(int respawnTime)
 	{
-		Text respawnText = respawnHUD.transform.Find("Countdown").gameObject.GetComponent<Text>();
 		for (int i = respawnTime; i >= 0; i--)
 		{
-			respawnText.text = "Respawning in: " + i;
+			_respawnText.text = "Respawning in: " + i;
 			yield return new WaitForSeconds(1);
 		}
 	}
 
 	[TargetRpc]
-	public void TargetRpcRespawn(NetworkConnection identity)
+	public void TargetRpcRespawn()
 	{
 		rb.position = Vector3.zero;
 		respawnHUD.SetActive(false);
@@ -99,14 +99,10 @@ public class GameStateManager: NetworkBehaviour
 		rb = GetComponent<Rigidbody>();
 		_messenger = GameObject.Find("LocalMessenger").GetComponent<LocalMessenger>();
 
-		/*if (!inGameHUD)
-			inGameHUD = Instantiate(Resources.Load<GameObject>("Prefabs/InGameHUD"));
-		if (!respawnHUD)
-			respawnHUD = Instantiate(Resources.Load<GameObject>("Prefabs/AwaitingRespawnHUD"));*/
-
 		inGameHUD = GameObject.Find("InGameHUD");
 		respawnHUD = GameObject.Find("AwaitingRespawnHUD");
 		respawnHUD.SetActive(false);
+		_respawnText = respawnHUD.transform.Find("Countdown").gameObject.GetComponent<Text>();
 		_messenger.InvokePlayerConnected(gameObject);
 	}
 

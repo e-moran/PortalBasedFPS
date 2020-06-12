@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using Mirror;
-using UnityEditor.Hardware;
 using UnityEngine;
 
 public class AttackableEntity : NetworkBehaviour
@@ -58,6 +57,8 @@ public class AttackableEntity : NetworkBehaviour
 	public void SetHealth(float health)
 	{
 		this.health = health;
+		if (health <= 0)
+			Death();
 	}
 
 	[Command]
@@ -70,8 +71,6 @@ public class AttackableEntity : NetworkBehaviour
     public void TakeDamage(float damage)
     {
 	    SetHealth(health - damage);
-	    if (health <= 0)
-		    Death();
     }
 
     [Server]
@@ -79,7 +78,7 @@ public class AttackableEntity : NetworkBehaviour
     {
 	    if (gameObject.CompareTag("Player") && respawns)
 	    {
-		    gsm.TargetRpcEnterDeadAwaitingRespawn(GetComponent<NetworkIdentity>().connectionToClient, respawnTimer, gameObject);
+		    gsm.TargetRpcEnterDeadAwaitingRespawn(respawnTimer);
 		    StartCoroutine(WaitForRespawn());
 	    }
 	    else
@@ -91,16 +90,14 @@ public class AttackableEntity : NetworkBehaviour
     [Server]
     IEnumerator WaitForRespawn()
     {
-	    Debug.Log("Waiting for respawn");
 	    for (int i = respawnTimer; i >= 0; i--)
 	    {
 		    yield return new WaitForSeconds(1);
 	    }
 
-	    Debug.Log("Respawning");
 	    SetHealth(maxHealth);
 	    OnHealthChanged?.Invoke(GetHealthInt());
-		gsm.TargetRpcRespawn(GetComponent<NetworkIdentity>().connectionToClient);
+		gsm.TargetRpcRespawn();
     }
 
 }
