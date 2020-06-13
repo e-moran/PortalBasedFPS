@@ -9,19 +9,19 @@ public class RBMovement : NetworkBehaviour
 	public float mouseSensitivity = 0.2f;
 	public float distToGround = 1.0f;
 
-	private Rigidbody rb;
-	private GameStateManager stateManager;
-	private Vector3 moveDirection = Vector3.zero;
-	private Vector3 bodyRotation = Vector3.zero;
-	private Transform cameraTransform;
-	private bool blinked = false;
-	private float cameraRot = 0f;
+	private Rigidbody _rb;
+	private GameStateManager _stateManager;
+	private Vector3 _moveDirection = Vector3.zero;
+	private Vector3 _bodyRotation = Vector3.zero;
+	private Transform _cameraTransform;
+	private bool _blinked = false;
+	private float _cameraRot = 0f;
 
 	void Start()
 	{
-		stateManager = GetComponent<GameStateManager>();
-		rb = gameObject.GetComponent<Rigidbody>();
-		cameraTransform = transform.GetChild(0);
+		_stateManager = GetComponent<GameStateManager>();
+		_rb = gameObject.GetComponent<Rigidbody>();
+		_cameraTransform = transform.GetChild(0);
 		if (isLocalPlayer)
 		{
 			gameObject.transform.GetChild(0).gameObject.SetActive(true); // Enable the camera on the correct player
@@ -37,29 +37,29 @@ public class RBMovement : NetworkBehaviour
 
 	    if (Input.GetButtonDown("Blink"))
 	    {
-		    transform.position += new Vector3(blinked ? -100 : 100, 0, 0); // Switch between adding and subbing 100
-		    blinked = !blinked;
+		    transform.position += new Vector3(_blinked ? -100 : 100, 0, 0); // Switch between adding and subbing 100
+		    _blinked = !_blinked;
 	    }
 
-	    bodyRotation = new Vector3(0, Input.GetAxis("Camera X"), 0) * (mouseSensitivity * Time.deltaTime);
-	    cameraRot += Input.GetAxis("Camera Y") * mouseSensitivity * Time.deltaTime;
-	    cameraRot = Mathf.Clamp(cameraRot, -90, 90); // To prevent the camera from flipping
+	    _bodyRotation = new Vector3(0, Input.GetAxis("Camera X"), 0) * mouseSensitivity;
+	    _cameraRot += Input.GetAxis("Camera Y") * mouseSensitivity;
+	    _cameraRot = Mathf.Clamp(_cameraRot, -90, 90); // To prevent the camera from flipping
 
-	    moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
-	    moveDirection = transform.TransformDirection(moveDirection); // Make sure forward takes in to account the direction the player is facing
-	    moveDirection *= speed;
-
-	    // If the player is sprinting we apply a multiplier to the player's speed
-	    if (Input.GetButton("Sprint"))
-	    {
-		    moveDirection *= sprintMultiplier;
-	    }
+	    _moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
+	    _moveDirection = transform.TransformDirection(_moveDirection); // Make sure forward takes in to account the direction the player is facing
+	    _moveDirection *= speed;
 
 	    if (IsGrounded())
 	    {
+		    // If the player is sprinting we apply a multiplier to the player's speed
+		    if (Input.GetButton("Sprint"))
+		    {
+			    _moveDirection *= sprintMultiplier;
+		    }
+
 		    if (Input.GetButtonDown("Jump"))
 		    {
-			    rb.AddForce(Vector3.up * Mathf.Sqrt(jumpHeight * -1f * Physics.gravity.y), ForceMode.VelocityChange);
+			    _rb.AddForce(Vector3.up * Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y), ForceMode.VelocityChange);
 		    }
 	    }
     }
@@ -67,11 +67,11 @@ public class RBMovement : NetworkBehaviour
     void FixedUpdate()
     {
 	    // Ensure that the player is in-game before attempting to move them
-	    if (stateManager.State == GameStateManager.GameState.IN_GAME)
+	    if (_stateManager.State == GameStateManager.GameState.IN_GAME)
 	    {
-		    rb.MovePosition(rb.position + moveDirection * Time.fixedDeltaTime);
-		    transform.Rotate(bodyRotation);
-		    cameraTransform.localEulerAngles = new Vector3(cameraRot, 0, 0);
+		    _rb.MovePosition(_rb.position + _moveDirection * Time.fixedDeltaTime);
+		    transform.Rotate(_bodyRotation);
+		    _cameraTransform.localEulerAngles = new Vector3(_cameraRot, 0, 0);
 	    }
     }
 
